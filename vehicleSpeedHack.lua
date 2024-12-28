@@ -58,7 +58,7 @@ local function CreateGUI()
 
     local MinimizeButton = Instance.new("TextButton", MainFrame)
     MinimizeButton.Size = UDim2.new(0.2, 0, 0.2, 0)
-    MinimizeButton.Position = UDim2.new(0.8, 0, 0, 0)
+    MinimizeButton.Position = UDim2.new(0.8, -5, 0, 5)
     MinimizeButton.Text = "_"
     MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
     MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -181,15 +181,6 @@ end
 -- Respawn behandeln
 local function OnCharacterAdded()
     CreateGUI()
-    UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then return end
-        if input.KeyCode == Enum.KeyCode.W then
-            while UserInputService:IsKeyDown(Enum.KeyCode.W) do
-                IncreaseSpeed()
-                RunService.Stepped:Wait()
-            end
-        end
-    end)
 end
 
 LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
