@@ -64,6 +64,7 @@ local function CreateGUI()
 	MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 	MinimizeButton.Font = Enum.Font.SourceSans
 	MinimizeButton.TextSize = 18
+	MinimizeButton.ZIndex = 10
 
     local RestoreButton = Instance.new("TextButton", ScreenGui)
     RestoreButton.Size = UDim2.new(0.05, 0, 0.05, 0)
