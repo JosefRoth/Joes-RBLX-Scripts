@@ -3,11 +3,13 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
+
+-- Globale Variablen, die beibehalten werden
 local velocityMult = 0.05 -- Geschwindigkeitserhöhung pro Tick
 local maxSpeed = 200 -- Maximalgeschwindigkeit in Studs pro Sekunde
 local scriptEnabled = false -- Steuerung, ob das Skript aktiv ist
-local dragging, dragStart, startPos
 local isMinimized = false -- Minimierungsstatus des GUIs
+local ScreenGui -- GUI-Referenz, um diese nach einem Respawn wiederherzustellen
 
 -- Funktion, um das Fahrzeug des Spielers zu finden
 local function GetVehicleFromDescendant(Descendant)
@@ -38,7 +40,11 @@ end
 
 -- Funktion, um die GUI zu erstellen
 local function CreateGUI()
-    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+    if ScreenGui then
+        ScreenGui:Destroy() -- Alte GUI entfernen, falls sie existiert
+    end
+
+    ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
     ScreenGui.Name = "VehicleControlGUI"
 
     local MainFrame = Instance.new("Frame", ScreenGui)
@@ -48,8 +54,28 @@ local function CreateGUI()
     MainFrame.BorderSizePixel = 2
     MainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
     MainFrame.Active = true
+    MainFrame.Visible = not isMinimized
 
-    -- Dragging-Funktion für Maus und Touch
+    local MinimizeButton = Instance.new("TextButton", MainFrame)
+    MinimizeButton.Size = UDim2.new(0.2, 0, 0.2, 0)
+    MinimizeButton.Position = UDim2.new(0.8, 0, 0, 0)
+    MinimizeButton.Text = "_"
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+    MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MinimizeButton.Font = Enum.Font.SourceSans
+    MinimizeButton.TextSize = 18
+
+    local RestoreButton = Instance.new("TextButton", ScreenGui)
+    RestoreButton.Size = UDim2.new(0.05, 0, 0.05, 0)
+    RestoreButton.Position = UDim2.new(0.96, -50, 0.98, -50)
+    RestoreButton.Text = "+"
+    RestoreButton.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
+    RestoreButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    RestoreButton.Font = Enum.Font.SourceSans
+    RestoreButton.TextSize = 36
+    RestoreButton.Visible = isMinimized
+
+    -- Dragging-Funktion für das Hauptfenster
     MainFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -76,7 +102,6 @@ local function CreateGUI()
         end
     end)
 
-    -- GUI-Elemente erstellen
     local Title = Instance.new("TextLabel", MainFrame)
     Title.Size = UDim2.new(1, 0, 0, 40)
     Title.Position = UDim2.new(0, 0, 0, 0)
@@ -89,7 +114,7 @@ local function CreateGUI()
     local EnableButton = Instance.new("TextButton", MainFrame)
     EnableButton.Size = UDim2.new(0.8, 0, 0, 30)
     EnableButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-    EnableButton.Text = "Enable Script: OFF"
+    EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
     EnableButton.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
     EnableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     EnableButton.Font = Enum.Font.SourceSans
@@ -113,7 +138,7 @@ local function CreateGUI()
     MaxSpeedSlider.Font = Enum.Font.SourceSans
     MaxSpeedSlider.TextSize = 18
 
-    -- Event-Verbindungen
+    -- Button-Ereignisse
     EnableButton.MouseButton1Click:Connect(function()
         scriptEnabled = not scriptEnabled
         EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
@@ -139,13 +164,23 @@ local function CreateGUI()
         end
     end)
 
-    return ScreenGui
+    -- Minimieren und Wiederherstellen
+    MinimizeButton.MouseButton1Click:Connect(function()
+        isMinimized = true
+        MainFrame.Visible = false
+        RestoreButton.Visible = true
+    end)
+
+    RestoreButton.MouseButton1Click:Connect(function()
+        isMinimized = false
+        MainFrame.Visible = true
+        RestoreButton.Visible = false
+    end)
 end
 
--- Respawn-Ereignis behandeln
+-- Respawn behandeln
 local function OnCharacterAdded()
-    local gui = CreateGUI()
-
+    CreateGUI()
     UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then return end
         if input.KeyCode == Enum.KeyCode.W then
@@ -159,7 +194,6 @@ end
 
 LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 
--- Beim ersten Start GUI erstellen
 if LocalPlayer.Character then
     OnCharacterAdded()
 end
