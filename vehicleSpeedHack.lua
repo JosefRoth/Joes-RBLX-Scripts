@@ -36,19 +36,10 @@ local function IncreaseSpeed()
     end
 end
 
--- GUI-Erstellungsfunktion
+-- Funktion, um die GUI zu erstellen
 local function CreateGUI()
-    -- Alte GUIs entfernen, falls vorhanden
-    if LocalPlayer.PlayerGui:FindFirstChild("VehicleControlGUI") then
-        LocalPlayer.PlayerGui:FindFirstChild("VehicleControlGUI"):Destroy()
-    end
-
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-    -- Haupt-GUI
-    local ScreenGui = Instance.new("ScreenGui")
+    local ScreenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
     ScreenGui.Name = "VehicleControlGUI"
-    ScreenGui.Parent = PlayerGui
 
     local MainFrame = Instance.new("Frame", ScreenGui)
     MainFrame.Size = UDim2.new(0, 300, 0, 200)
@@ -59,14 +50,16 @@ local function CreateGUI()
     MainFrame.Active = true
 
     -- Dragging-Funktion für Maus und Touch
-    local function StartDrag(input)
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-    end
+    MainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
 
-    local function UpdateDrag(input)
-        if dragging then
+    MainFrame.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
             MainFrame.Position = UDim2.new(
                 startPos.X.Scale,
@@ -75,27 +68,11 @@ local function CreateGUI()
                 startPos.Y.Offset + delta.Y
             )
         end
-    end
-
-    local function StopDrag()
-        dragging = false
-    end
-
-    MainFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            StartDrag(input)
-        end
-    end)
-
-    MainFrame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            UpdateDrag(input)
-        end
     end)
 
     MainFrame.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            StopDrag()
+            dragging = false
         end
     end)
 
@@ -112,16 +89,11 @@ local function CreateGUI()
     local EnableButton = Instance.new("TextButton", MainFrame)
     EnableButton.Size = UDim2.new(0.8, 0, 0, 30)
     EnableButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-    EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
+    EnableButton.Text = "Enable Script: OFF"
     EnableButton.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
     EnableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     EnableButton.Font = Enum.Font.SourceSans
     EnableButton.TextSize = 18
-
-    EnableButton.MouseButton1Click:Connect(function()
-        scriptEnabled = not scriptEnabled
-        EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
-    end)
 
     local VelocitySlider = Instance.new("TextBox", MainFrame)
     VelocitySlider.Size = UDim2.new(0.8, 0, 0, 30)
@@ -131,6 +103,21 @@ local function CreateGUI()
     VelocitySlider.TextColor3 = Color3.fromRGB(255, 255, 255)
     VelocitySlider.Font = Enum.Font.SourceSans
     VelocitySlider.TextSize = 18
+
+    local MaxSpeedSlider = Instance.new("TextBox", MainFrame)
+    MaxSpeedSlider.Size = UDim2.new(0.8, 0, 0, 30)
+    MaxSpeedSlider.Position = UDim2.new(0.1, 0, 0.7, 0)
+    MaxSpeedSlider.Text = "Max Speed: " .. tostring(maxSpeed)
+    MaxSpeedSlider.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+    MaxSpeedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MaxSpeedSlider.Font = Enum.Font.SourceSans
+    MaxSpeedSlider.TextSize = 18
+
+    -- Event-Verbindungen
+    EnableButton.MouseButton1Click:Connect(function()
+        scriptEnabled = not scriptEnabled
+        EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
+    end)
 
     VelocitySlider.FocusLost:Connect(function()
         local newValue = tonumber(VelocitySlider.Text:match("%d+%.?%d*"))
@@ -142,15 +129,6 @@ local function CreateGUI()
         end
     end)
 
-    local MaxSpeedSlider = Instance.new("TextBox", MainFrame)
-    MaxSpeedSlider.Size = UDim2.new(0.8, 0, 0, 30)
-    MaxSpeedSlider.Position = UDim2.new(0.1, 0, 0.7, 0)
-    MaxSpeedSlider.Text = "Max Speed: " .. tostring(maxSpeed)
-    MaxSpeedSlider.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
-    MaxSpeedSlider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MaxSpeedSlider.Font = Enum.Font.SourceSans
-    MaxSpeedSlider.TextSize = 18
-
     MaxSpeedSlider.FocusLost:Connect(function()
         local newValue = tonumber(MaxSpeedSlider.Text:match("%d+"))
         if newValue then
@@ -160,8 +138,28 @@ local function CreateGUI()
             MaxSpeedSlider.Text = "Invalid Value!"
         end
     end)
+
+    return ScreenGui
 end
 
--- GUI erstellen und beim Respawn neu initialisieren
-CreateGUI()
-LocalPlayer.CharacterAdded:Connect(CreateGUI)
+-- Respawn-Ereignis behandeln
+local function OnCharacterAdded()
+    local gui = CreateGUI()
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+        if gameProcessedEvent then return end
+        if input.KeyCode == Enum.KeyCode.W then
+            while UserInputService:IsKeyDown(Enum.KeyCode.W) do
+                IncreaseSpeed()
+                RunService.Stepped:Wait()
+            end
+        end
+    end)
+end
+
+LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+
+-- Beim ersten Start GUI erstellen
+if LocalPlayer.Character then
+    OnCharacterAdded()
+end
