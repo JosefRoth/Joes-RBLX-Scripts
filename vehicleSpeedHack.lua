@@ -104,7 +104,7 @@ local function CreateGUI()
     local EnableButton = Instance.new("TextButton", MainFrame)
     EnableButton.Size = UDim2.new(0.8, 0, 0, 30)
     EnableButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-    EnableButton.Text = "Enable Script: OFF"
+    EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
     EnableButton.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
     EnableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     EnableButton.Font = Enum.Font.SourceSans
@@ -165,11 +165,13 @@ local function CreateGUI()
     HelpFrame.Position = UDim2.new(0.3, 0, 0.3, 0)
     HelpFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     HelpFrame.Visible = false
+    HelpFrame.BorderSizePixel = 2
+    HelpFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
 
     local HelpText = Instance.new("TextLabel", HelpFrame)
     HelpText.Size = UDim2.new(1, -20, 1, -40)
     HelpText.Position = UDim2.new(0, 10, 0, 10)
-    HelpText.Text = "Controls:\n- W: accelerate\n- To move GUI just drag it\n- Change values: click and enter\n- If you’re on mobile you need to use and onscreen keyboard"
+    HelpText.Text = "Controls:\n- W: accelerate\n- To move GUI just drag it\n- Change values: click and enter\n- If you’re on mobile you need to use an onscreen keyboard"
     HelpText.TextColor3 = Color3.fromRGB(255, 255, 255)
     HelpText.BackgroundTransparency = 1
     HelpText.Font = Enum.Font.SourceSans
@@ -244,6 +246,12 @@ local function CreateGUI()
         MainFrame.Visible = true
         RestoreButton.Visible = false
     end)
+
+    -- Speichern des Minimierungsstatus
+    if isMinimized then
+        MainFrame.Visible = false
+        RestoreButton.Visible = true
+    end
 end
 
 -- GUI beim Respawn des Spielers neu erstellen
