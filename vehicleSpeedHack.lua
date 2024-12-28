@@ -242,3 +242,26 @@ RestoreButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = true
     RestoreButton.Visible = false
 end)
+
+-- Beim Respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    -- Wiederherstellen der Variablen nach dem Respawn
+    if LocalPlayer:GetAttribute("velocityMult") then
+        velocityMult = LocalPlayer:GetAttribute("velocityMult")
+    end
+    if LocalPlayer:GetAttribute("maxSpeed") then
+        maxSpeed = LocalPlayer:GetAttribute("maxSpeed")
+    end
+    if LocalPlayer:GetAttribute("scriptEnabled") then
+        scriptEnabled = LocalPlayer:GetAttribute("scriptEnabled")
+    end
+    
+    -- GUI nach Respawn wieder anzeigen
+    MainFrame.Visible = true
+    RestoreButton.Visible = false
+end)
+
+-- Speichern der Variablen
+LocalPlayer:SetAttribute("velocityMult", velocityMult)
+LocalPlayer:SetAttribute("maxSpeed", maxSpeed)
+LocalPlayer:SetAttribute("scriptEnabled", scriptEnabled)
