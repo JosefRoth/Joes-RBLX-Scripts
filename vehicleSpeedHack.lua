@@ -183,85 +183,62 @@ CloseHelpButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 CloseHelpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseHelpButton.Font = Enum.Font.SourceSans
 CloseHelpButton.TextSize = 18
-
--- Verhalten des Hilfe-Knopfes
-HelpButton.MouseButton1Click:Connect(function()
-    HelpFrame.Visible = true
-end)
-
 CloseHelpButton.MouseButton1Click:Connect(function()
     HelpFrame.Visible = false
 end)
 
--- GUI-Elemente verbinden
-EnableButton.MouseButton1Click:Connect(function()
-    scriptEnabled = not scriptEnabled
-    EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
-end)
-
-VelocitySlider.FocusLost:Connect(function()
-    local newValue = tonumber(VelocitySlider.Text:match("%d+%.?%d*"))
-    if newValue then
-        velocityMult = newValue
-        VelocitySlider.Text = "Velocity Multiplier: " .. tostring(velocityMult)
-    else
-        VelocitySlider.Text = "Invalid Value!"
-    end
-end)
-
-MaxSpeedSlider.FocusLost:Connect(function()
-    local newValue = tonumber(MaxSpeedSlider.Text:match("%d+"))
-    if newValue then
-        maxSpeed = newValue
-        MaxSpeedSlider.Text = "Max Speed: " .. tostring(maxSpeed)
-    else
-        MaxSpeedSlider.Text = "Invalid Value!"
-    end
-end)
-
--- Ereignis: Wenn die Taste `W` gedrückt wird
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent then return end
-    if input.KeyCode == Enum.KeyCode.W then
-        while UserInputService:IsKeyDown(Enum.KeyCode.W) do
-            IncreaseSpeed()
-            RunService.Stepped:Wait()
-        end
-    end
-end)
-
--- Minimieren und Wiederherstellen
+-- Minimierungs- und Wiederherstellungslogik
 MinimizeButton.MouseButton1Click:Connect(function()
-    isMinimized = true
+    isMinimized = true -- Status speichern
     MainFrame.Visible = false
     RestoreButton.Visible = true
 end)
 
 RestoreButton.MouseButton1Click:Connect(function()
-    isMinimized = false
+    isMinimized = false -- Status speichern
     MainFrame.Visible = true
     RestoreButton.Visible = false
 end)
 
--- Beim Respawn
+-- GUI wiederherstellen, wenn minimiert
+if isMinimized then
+    MainFrame.Visible = false
+    RestoreButton.Visible = true
+end
+
+-- Script aktivieren/deaktivieren
+EnableButton.MouseButton1Click:Connect(function()
+    scriptEnabled = not scriptEnabled
+    if scriptEnabled then
+        EnableButton.Text = "Enable Script: ON"
+    else
+        EnableButton.Text = "Enable Script: OFF"
+    end
+end)
+
+-- Geschwindigkeitseinstellungen anpassen
+VelocitySlider.FocusLost:Connect(function()
+    local newVelocity = tonumber(VelocitySlider.Text:match("([0-9.]+)"))
+    if newVelocity then
+        velocityMult = newVelocity
+        VelocitySlider.Text = "Velocity Multiplier: " .. tostring(velocityMult)
+    end
+end)
+
+MaxSpeedSlider.FocusLost:Connect(function()
+    local newSpeed = tonumber(MaxSpeedSlider.Text:match("([0-9.]+)"))
+    if newSpeed then
+        maxSpeed = newSpeed
+        MaxSpeedSlider.Text = "Max Speed: " .. tostring(maxSpeed)
+    end
+end)
+
+-- Funktion, die beim Respawn aufgerufen wird, um die GUI zu erstellen
 LocalPlayer.CharacterAdded:Connect(function()
-    -- Wiederherstellen der Variablen nach dem Respawn
-    if LocalPlayer:GetAttribute("velocityMult") then
-        velocityMult = LocalPlayer:GetAttribute("velocityMult")
+    -- GUI erstellen
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    if isMinimized then
+        MainFrame.Visible = false
+        RestoreButton.Visible = true
     end
-    if LocalPlayer:GetAttribute("maxSpeed") then
-        maxSpeed = LocalPlayer:GetAttribute("maxSpeed")
-    end
-    if LocalPlayer:GetAttribute("scriptEnabled") then
-        scriptEnabled = LocalPlayer:GetAttribute("scriptEnabled")
-    end
-    
-    -- GUI nach Respawn wieder anzeigen
-    MainFrame.Visible = true
-    RestoreButton.Visible = false
 end)
-
--- Speichern der Variablen
-LocalPlayer:SetAttribute("velocityMult", velocityMult)
-LocalPlayer:SetAttribute("maxSpeed", maxSpeed)
-LocalPlayer:SetAttribute("scriptEnabled", scriptEnabled)
