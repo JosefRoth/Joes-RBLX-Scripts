@@ -56,9 +56,9 @@ local function CreateGUI()
     MainFrame.Active = true
     MainFrame.Visible = not isMinimized
 
-    local MinimizeButton = Instance.new("TextButton", MainFrame)
-	MinimizeButton.Size = UDim2.new(0, 30, 0, 30) -- Kleinere Größe, passend für die Ecke
-	MinimizeButton.Position = UDim2.new(1, -35, 0, 5) -- Neben der Überschrift, am rechten Rand
+	local MinimizeButton = Instance.new("TextButton", MainFrame)
+	MinimizeButton.Size = UDim2.new(0, 30, 0, 30) -- Kleinere Größe
+	MinimizeButton.Position = UDim2.new(1, -35, 0, 5) -- Direkt neben der Überschrift, rechts oben
 	MinimizeButton.Text = "_"
 	MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
 	MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
