@@ -8,7 +8,6 @@ local maxSpeed = 200 -- Maximalgeschwindigkeit in Studs pro Sekunde
 local scriptEnabled = false -- Steuerung, ob das Skript aktiv ist
 local dragging, dragStart, startPos
 local isMinimized = false -- Minimierungsstatus des GUIs
-local helpFrameVisible = false -- Status des Hilfe-Frames
 
 -- Funktion, um das Fahrzeug des Spielers zu finden
 local function GetVehicleFromDescendant(Descendant)
@@ -39,6 +38,11 @@ end
 
 -- GUI-Erstellungsfunktion
 local function CreateGUI()
+    -- Alte GUIs entfernen, falls vorhanden
+    if LocalPlayer.PlayerGui:FindFirstChild("VehicleControlGUI") then
+        LocalPlayer.PlayerGui:FindFirstChild("VehicleControlGUI"):Destroy()
+    end
+
     local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
     -- Haupt-GUI
@@ -108,11 +112,16 @@ local function CreateGUI()
     local EnableButton = Instance.new("TextButton", MainFrame)
     EnableButton.Size = UDim2.new(0.8, 0, 0, 30)
     EnableButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-    EnableButton.Text = "Enable Script: OFF"
+    EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
     EnableButton.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
     EnableButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     EnableButton.Font = Enum.Font.SourceSans
     EnableButton.TextSize = 18
+
+    EnableButton.MouseButton1Click:Connect(function()
+        scriptEnabled = not scriptEnabled
+        EnableButton.Text = "Enable Script: " .. (scriptEnabled and "ON" or "OFF")
+    end)
 
     local VelocitySlider = Instance.new("TextBox", MainFrame)
     VelocitySlider.Size = UDim2.new(0.8, 0, 0, 30)
@@ -123,6 +132,16 @@ local function CreateGUI()
     VelocitySlider.Font = Enum.Font.SourceSans
     VelocitySlider.TextSize = 18
 
+    VelocitySlider.FocusLost:Connect(function()
+        local newValue = tonumber(VelocitySlider.Text:match("%d+%.?%d*"))
+        if newValue then
+            velocityMult = newValue
+            VelocitySlider.Text = "Velocity Multiplier: " .. tostring(velocityMult)
+        else
+            VelocitySlider.Text = "Invalid Value!"
+        end
+    end)
+
     local MaxSpeedSlider = Instance.new("TextBox", MainFrame)
     MaxSpeedSlider.Size = UDim2.new(0.8, 0, 0, 30)
     MaxSpeedSlider.Position = UDim2.new(0.1, 0, 0.7, 0)
@@ -132,55 +151,17 @@ local function CreateGUI()
     MaxSpeedSlider.Font = Enum.Font.SourceSans
     MaxSpeedSlider.TextSize = 18
 
-    -- Minimieren-Knopf
-    local MinimizeButton = Instance.new("TextButton", MainFrame)
-    MinimizeButton.Size = UDim2.new(0.2, 0, 0.2, 0)
-    MinimizeButton.Position = UDim2.new(0.8, 0, 0, 0)
-    MinimizeButton.Text = "_"
-    MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
-    MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MinimizeButton.Font = Enum.Font.SourceSans
-    MinimizeButton.TextSize = 18
-
-    -- Wiederherstellungsknopf
-    local RestoreButton = Instance.new("TextButton", ScreenGui)
-    RestoreButton.Size = UDim2.new(0.05, 0, 0.05, 0)
-    RestoreButton.Position = UDim2.new(0.96, -50, 0.98, -50)
-    RestoreButton.Text = "+"
-    RestoreButton.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
-    RestoreButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    RestoreButton.Font = Enum.Font.SourceSans
-    RestoreButton.TextSize = 36
-    RestoreButton.Visible = false
-
-    -- Hilfeframe
-    local HelpFrame = Instance.new("Frame", ScreenGui)
-    HelpFrame.Size = UDim2.new(0.6, 0, 0.3, 0)
-    HelpFrame.Position = UDim2.new(0.2, 0, 0.35, 0)
-    HelpFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    HelpFrame.Visible = false
-
-    local HelpText = Instance.new("TextLabel", HelpFrame)
-    HelpText.Size = UDim2.new(1, 0, 1, 0)
-    HelpText.Text = "Steuerung:\n- W: Geschwindigkeit erhöhen"
-    HelpText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HelpText.Font = Enum.Font.SourceSans
-    HelpText.TextSize = 18
-
-    -- Minimieren, Wiederherstellen und Hilfetext-Logik
-    MinimizeButton.MouseButton1Click:Connect(function()
-        isMinimized = true
-        MainFrame.Visible = false
-        RestoreButton.Visible = true
-    end)
-
-    RestoreButton.MouseButton1Click:Connect(function()
-        isMinimized = false
-        MainFrame.Visible = true
-        RestoreButton.Visible = false
+    MaxSpeedSlider.FocusLost:Connect(function()
+        local newValue = tonumber(MaxSpeedSlider.Text:match("%d+"))
+        if newValue then
+            maxSpeed = newValue
+            MaxSpeedSlider.Text = "Max Speed: " .. tostring(maxSpeed)
+        else
+            MaxSpeedSlider.Text = "Invalid Value!"
+        end
     end)
 end
 
--- GUI beim Spielstart und nach Respawn erstellen
+-- GUI erstellen und beim Respawn neu initialisieren
 CreateGUI()
 LocalPlayer.CharacterAdded:Connect(CreateGUI)
